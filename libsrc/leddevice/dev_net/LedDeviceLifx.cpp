@@ -50,7 +50,7 @@ static const char STREAM_CONTROL_PORT[] = "streamControlPort";
 const quint16 STREAM_CONTROL_DEFAULT_PORT = 60222; //Fixed port for Canvas;
 
 // Nanoleaf OpenAPI URLs
-static const char API_DEFAULT_PORT[] = "16021";
+static const char API_DEFAULT_PORT[] = "56700";
 static const char API_URL_FORMAT[] = "http://%1:%2/api/v1/%3/%4";
 static const char API_ROOT[] = "";
 //static const char API_EXT_MODE_STRING_V1[] = "{\"write\" : {\"command\" : \"display\", \"animType\" : \"extControl\"}}";
