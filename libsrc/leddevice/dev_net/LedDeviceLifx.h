@@ -37,6 +37,55 @@
 const ushort LIFX_DEFAULT_PORT = 56700;
 static const char LIFX_DEFAULT_HOST[] = "255.255.255.255";
 
+
+
+
+	/// source of below: https://gist.github.com/smarthall/875301eb5a6b35378aec#file-lifx-h
+	///uint16_t size;
+	///uint16_t protocol:12;
+	///uint8_t	addressable:1;
+	///uint8_t	tagged:1;
+	///uint8_t	origin:2;
+	///uint32_t source;
+	////* frame address */
+	///uint8_t	target[8];
+	///uint8_t	reserved[6];
+	///uint8_t	res_required:1;
+	///uint8_t	ack_required:1;
+	///uint8_t	:6;
+	///uint8_t	sequence;
+	////* protocol header */
+	///uint64_t :64;
+	///uint16_t type;
+	///uint16_t :16;
+
+
+	/// vs hyperion's LedDeviceUdpArtNet.h
+	///typedef union
+///{
+///	struct {
+///		char		ID[8];		// "Art-Net"
+///		uint16_t	OpCode;		// See Doc. Table 1 - OpCodes eg. 0x5000 OpOutput / OpDmx
+///		uint16_t	ProtVer;	// 0x0e00 (aka 14)
+///		uint8_t		Sequence;	// monotonic counter
+///		uint8_t		Physical;	// 0x00
+///		uint8_t		SubUni;		// low universe (0-255)
+///		uint8_t		Net;		// high universe (not used)
+///		uint16_t	Length;		// data length (2 - 512)
+///		uint8_t		Data[ DMX_MAX ];	// universe data
+///	} __attribute__((packed));
+
+///	uint8_t raw[ 18 + DMX_MAX ];
+
+///} artnet_packet_t;
+
+
+
+
+
+
+
+
 ///
 /// Implementation of the LedDevice interface for sending to
 /// Lifx devices via network by using the 'external control' protocol.
@@ -107,24 +156,6 @@ protected:
 	///
 	virtual int open() override;
 
-
-	///uint16_t size;
-	///uint16_t protocol:12;
-	///uint8_t	addressable:1;
-	///uint8_t	tagged:1;
-	///uint8_t	origin:2;
-	///uint32_t source;
-	////* frame address */
-	///uint8_t	target[8];
-	///uint8_t	reserved[6];
-	///uint8_t	res_required:1;
-	///uint8_t	ack_required:1;
-	///uint8_t	:6;
-	///uint8_t	sequence;
-	////* protocol header */
-	///uint64_t :64;
-	///uint16_t type;
-	///uint16_t :16;
 
 private:
 	// QNetworkAccessManager object for sending requests.
