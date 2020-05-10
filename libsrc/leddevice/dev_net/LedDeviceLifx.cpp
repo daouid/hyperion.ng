@@ -1,47 +1,28 @@
 // Local-Hyperion includes
 #include "LedDeviceLifx.h"
 
-// hyperion includes
-#include "ProviderUdp.h"
-
-// ssdp discover
-#include <ssdp/SSDPDiscover.h>
-
-// Qt includes
-#include <QEventLoop>
-#include <QNetworkReply>
-
-//std includes
-#include <sstream>
-#include <iomanip>
-
-
-class LedDeviceLifx : public ProviderUdp
+LedDeviceLifx::LedDeviceLifx(const QJsonObject &deviceConfig)
+	: ProviderUdp()
 {
-public:
-	///
-	/// Constructs specific LedDevice
-	///
-	/// @param deviceConfig json device config
-	///
-	explicit LedDeviceLifx(const QJsonObject &deviceConfig);
+	_devConfig = deviceConfig;
+	_deviceReady = false;
+}
 
-	/// constructs leddevice
-	static LedDevice* construct(const QJsonObject &deviceConfig);
+LedDevice* LedDeviceLifx::construct(const QJsonObject &deviceConfig)
+{
+	return new LedDeviceLifx(deviceConfig);
+}
 
-	///
-	/// Sets configuration
-	///
-	/// @param deviceConfig the json device config
-	/// @return true if success
-	bool init(const QJsonObject &deviceConfig) override;
+bool LedDeviceLifx::init(const QJsonObject &deviceConfig)
+{
+	_port = RAW_DEFAULT_PORT;
+	bool isInitOK = ProviderUdp::init(deviceConfig);
+	return isInitOK;
+}
 
-private:
-	///
-	/// Writes the led color values to the led-device
-	///
-	/// @param ledValues The color-value per led
-	/// @return Zero on succes else negative
-	///
-	virtual int write(const std::vector<ColorRgb> &ledValues) override;
-};
+int LedDeviceLifx::write(const std::vector<ColorRgb> &ledValues)
+{
+	const uint8_t * dataPtr = reinterpret_cast<const uint8_t *>(ledValues.data());
+
+	return writeBytes((unsigned)_ledRGBCount, dataPtr);
+}

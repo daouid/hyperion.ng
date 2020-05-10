@@ -2,27 +2,37 @@
 
 //including way too much , just copying all from other leddevice headers
 #include <leddevice/LedDevice.h>
-#include "ProviderUdp.h"
-#include <ssdp/SSDPDiscover.h>
 #include <utils/Logger.h>
+#include <ssdp/SSDPDiscover.h>
+#include "ProviderUdp.h"
+
 #include <cstring>
 #include <cstdio>
-#include <iostream>
 #include <exception>
+#include <set>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <stdint.h>
-#include <QString>
-#include <QStringList>
-#include <QUdpSocket>
+
+#include <sstream>
+#include <iomanip>
+#include <iostream>
+
+#include <QEventLoop>
 #include <QHostInfo>
 #include <QHostAddress>
-#include <QVector>
 #include <QNetworkAccessManager>
+#include <QNetworkReply>
 #include <QObject>
+#include <QString>
+#include <QStringList>
 #include <QTimer>
 #include <QTcpSocket>
-#include <set>
+#include <QUdpSocket>
+#include <QUuid>
+#include <QVector>
+
+#define RAW_DEFAULT_PORT	56700
 
 // lifx device port
 const ushort LIFX_DEFAULT_PORT = 56700;
