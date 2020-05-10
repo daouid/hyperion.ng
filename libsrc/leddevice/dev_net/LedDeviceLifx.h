@@ -49,11 +49,11 @@ static const char LIFX_DEFAULT_HOST[] = "255.255.255.255";
 class QUdpSocket;
 
 /**
- * Implementation for the AtmoOrb
+ * Implementation for Lifx
  *
- * To use set the device to "atmoorb".
+ * To use set the device to "lifx".
  *
- * @author RickDB (github)
+ * based on work of RickDB (github)
  */
 class LedDeviceLifx : public LedDevice
 {

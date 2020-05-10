@@ -34,7 +34,7 @@
 		"useOrbSmoothing": {
 			"type": "boolean",
 			"title":"edt_dev_spec_useOrbSmoothing_title",
-			"default": true,
+			"default": false,
 			"propertyOrder" : 5
 		},
 		"latchTime": {
