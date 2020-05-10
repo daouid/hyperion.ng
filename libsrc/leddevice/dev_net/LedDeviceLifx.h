@@ -16,6 +16,7 @@
 
 #include <sstream>
 #include <iomanip>
+
 #include <iostream>
 
 #include <QEventLoop>
@@ -78,29 +79,46 @@ typedef union
 } lifx_packet_t;
 
 
-/// Implementation of the LedDevice interface for sending led colors via udp.
+///
+/// Implementation of the LedDevice interface for sending to
+/// Lifx devices via network by using the 'external control' protocol.
 ///
 class LedDeviceLifx : public ProviderUdp
 {
 public:
 	///
-	/// Constructs the LedDevice for Lifx LightPanels
+	/// Constructs the LedDevice for Lifx LightPanels (aka Aurora) or Canvas
 	///
-	/// @param deviceConfig json config for Lifx
+	/// following code shows all config options
+	/// @code
+	/// "device" :
+	/// {
+	///     "type"   : "lifx"
+	///     "output" : "hostname or IP", // Optional. If empty, device is tried to be discovered
+	///     "token"  : "Authentication Token",
+	/// },
+	///@endcode
+	///
+	/// @param deviceConfig json config for lifx
 	///
 	explicit LedDeviceLifx(const QJsonObject &deviceConfig);
 
+	///
+	/// Destructor of the LedDevice; closes the tcp client
+	///
+	virtual ~LedDeviceLifx() override;
+
 	/// Constructs leddevice
 	static LedDevice* construct(const QJsonObject &deviceConfig);
-	
-	///
-	/// Sets configuration
-	///
-	/// @param deviceConfig the json device config
-	/// @return true if success
-	bool init(const QJsonObject &deviceConfig) override;
 
-private:
+	/// Switch the device on
+	virtual int switchOn() override;
+
+	/// Switch the device off
+	virtual int switchOff() override;
+
+protected:
+
 	///
 	/// Writes the led color values to the led-device
 	///
@@ -108,4 +126,117 @@ private:
 	/// @return Zero on succes else negative
 	///
 	virtual int write(const std::vector<ColorRgb> & ledValues) override;
+
+	///
+	/// Initialise Lifx device's configuration and network address details
+	///
+	/// @param deviceConfig the json device config
+	/// @return True if success
+	///
+	bool init(const QJsonObject &deviceConfig) override;
+
+	///
+	/// Get Lifx device details and configuration
+	///
+	/// @return True, if Lifx device capabilities fit configuration
+	///
+	bool initLeds();
+
+	///
+	/// Opens and initiatialises the output device
+	///
+	/// @return Zero on succes (i.e. device is ready and enabled) else negative
+	///
+	virtual int open() override;
+
+private:
+	// QNetworkAccessManager object for sending requests.
+	QNetworkAccessManager* _networkmanager;
+
+	QString _hostname;
+	QString _api_port;
+
+	//Lifx device details
+	QString _deviceModel;
+	QString _deviceFirmwareVersion;
+	ushort _extControlVersion;
+	
+	/// https://lan.developer.lifx.com/docs/multizone-messages
+	/// The number of panels with leds
+	uint _panelLedCount;
+	/// Array of the pannel ids.
+	std::vector<uint> _panelIds;
+
+	///
+	/// Discover Lifx device via SSDP identifiers
+	///
+	/// @return True, if Lifx device was found
+	///
+	bool discoverDevice();
+
+	///
+	/// Change Lifx device to External Control (UDP) mode
+	///
+	/// @return Response from device
+	///
+	QJsonDocument changeToExternalControlMode();
+
+	///
+	/// Get command to switch Lifx device on or off
+	///
+	/// @param isOn True, if to switch on device
+	/// @return Command to switch device on/off
+	///
+	QString getOnOffRequest (bool isOn ) const;
+
+	///
+	/// Get command as url
+	///
+	/// @param host Hostname or IP
+	/// @param port IP-Port
+	/// @param _auth_token Authorization token
+	/// @param Endpoint command for request
+	/// @return Url to execute endpoint/command
+	///
+	QString getUrl(QString host, QString port, QString endpoint) const;
+
+	///
+	/// Execute GET request
+	///
+	/// @param url GET request for url
+	/// @return Response from device
+	///
+	QJsonDocument getJson(QString url);
+
+	///
+	/// Execute PUT request
+	///
+	/// @param Url for PUT request
+	/// @param json Command for request
+	/// @return Response from device
+	///
+	QJsonDocument putJson(QString url, QString json);
+
+	///
+	/// Handle replys for GET and PUT requests
+	///
+	/// @param reply Network reply
+	/// @return Response for request, if no error
+	///
+	QJsonDocument handleReply(QNetworkReply* const &reply );
+
+	///
+	/// convert vector to hex string
+	///
+	/// @param uint8_t vector
+	/// @return vector as string of hex values
+	std::string uint8_vector_to_hex_string( const std::vector<uint8_t>& buffer ) const;
+	
+	/// Array of the light ids.
+	std::vector<unsigned int> _lightIds;
+	/// Array to save the lamps.
+	std::vector<LifxLight> _lights;
+
+	unsigned int _lightsCount;
+	
 };
