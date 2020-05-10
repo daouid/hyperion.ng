@@ -33,8 +33,6 @@
 #include <QUuid>
 #include <QVector>
 
-#define RAW_DEFAULT_PORT	56700
-
 // lifx device port
 const ushort LIFX_DEFAULT_PORT = 56700;
 
@@ -235,7 +233,7 @@ private:
 	/// Array of the light ids.
 	std::vector<unsigned int> _lightIds;
 	/// Array to save the lamps.
-	std::vector<LifxLight> _lights;
+	std::vector<LedDeviceLifx> _lights;
 
 	unsigned int _lightsCount;
 	
