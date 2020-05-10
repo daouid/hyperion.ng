@@ -2,38 +2,51 @@
 	"type":"object",
 	"required":true,
 	"properties":{
-		"host" : {
+		"output": {
 			"type": "string",
-			"title":"edt_dev_spec_targetIp_title",
-			"default": "255.255.255.255",
+			"title":"edt_dev_spec_multicastGroup_title",
+			"default" : "255.255.255.255",
 			"propertyOrder" : 1
 		},
-		"port" : {
-			"type": "integer",
-			"title":"edt_dev_spec_port_title",
-			"default": 56700,
-			"minimum" : 0,
-			"maximum" : 65535,
-			"propertyOrder" : 2
-		},
-		"lightIds": {
+		"orbIds": {
 			"type": "array",
-			"title":"edt_dev_spec_lightid_title",
-			"minItems": 1,
-			"uniqueItems" : true,
+			"title":"edt_dev_spec_orbIds_title",
 			"items" : {
-				"type" : "integer",
-				"minimum" : 0,
+				"type" : "string",
 				"title" : "edt_dev_spec_lightid_itemtitle"
 			},
+			"propertyOrder" : 2
+		},
+		"numLeds": {
+			"type": "integer",
+			"title":"edt_dev_spec_numberOfLeds_title",
+			"default": 24,
+			"propertyOrder" : 3
+		},
+		"port": {
+			"type": "integer",
+			"title":"edt_dev_spec_port_title",
+			"minimum" : 0,
+			"maximum" : 65535,
+			"default": 56700,
 			"propertyOrder" : 4
 		},
-		"host": {
-			"type": "string",
-			"title":"edt_dev_spec_targetIpHost_title",
+		"useOrbSmoothing": {
+			"type": "boolean",
+			"title":"edt_dev_spec_useOrbSmoothing_title",
+			"default": true,
 			"propertyOrder" : 5
+		},
+		"latchTime": {
+			"type": "integer",
+			"title":"edt_dev_spec_latchtime_title",
+			"default": 1,
+			"append" : "edt_append_ms",
+			"minimum": 1,
+			"maximum": 1000,
+			"access" : "expert",
+			"propertyOrder" : 6
 		}
 	},
 	"additionalProperties": true
 }
-

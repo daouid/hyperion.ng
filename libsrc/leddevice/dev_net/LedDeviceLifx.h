@@ -33,112 +33,61 @@
 #include <QUuid>
 #include <QVector>
 
-// lifx device port
-const ushort LIFX_DEFAULT_PORT = 56700;
+
 
 // lifx device discovery:
 /// The protocol documentation includes a section on workflows including how to do discovery. Essentially it works like this: Send a Device::GetService packet to the broadcast address (255.255.255.255) on port 56700
-/// Each bulb will respond with a list of service they support as a Device::StateService 23 message. The only service currently documented is UDP which has its type field set to 1. When your application receives one of these messages it should store the sender address and the service port internally. This will constitute the list of LIFX devices that you have found. source: https://community.lifx.com/t/discovering-lifx-bulbs/265
-///The basic premise is you create a UDP socket and then throw bytes at it. It’s recommended you only broadcast the GetService 2 to 255.255.255.255 and use the StateService replies to know what devices are on your network.
+/// Each bulb will respond with a list of service they support as a Device::StateService message. The only service currently documented is UDP which has its type field set to 1. When your application receives one of these messages it should store the sender address and the service port internally. This will constitute the list of LIFX devices that you have found. source: https://community.lifx.com/t/discovering-lifx-bulbs/265
+///The basic premise is you create a UDP socket and then throw bytes at it. It’s recommended you only broadcast the GetService to 255.255.255.255 and use the StateService replies to know what devices are on your network.
 
 /// Then you “unicast” bytes to specific devices, which is the same as a broadcast, but instead of sending to 255.255.255.255 you send to the specific IP of the device you want to talk to. https://community.lifx.com/t/how-to-send-a-packet-to-a-lifx-bulb-using-the-lifx-lan-protocol/6502
 
-
+// lifx device port
+const ushort LIFX_DEFAULT_PORT = 56700;
 static const char LIFX_DEFAULT_HOST[] = "255.255.255.255";
 
-/// source of below: https://gist.github.com/smarthall/875301eb5a6b35378aec#file-lifx-h
-/// mixed with vs hyperion's LedDeviceUdpArtNet.h
-	
-typedef union
-{
-	struct {
-		/* frame */
-		uint16_t	size;
-		uint16_t	protocol:12;
-		uint8_t		addressable:1;
-		uint8_t		tagged:1;
-		uint8_t		origin:2;
-		uint32_t	source;
-		/* frame address */
-		uint8_t		target[8];
-		uint8_t		reserved[6];
-		uint8_t		res_required:1;
-		uint8_t		ack_required:1;
-		uint8_t		:6;
-		uint8_t		sequence;
-		/* protocol header */
-		uint64_t	:64;
-		uint16_t	type;
-		uint16_t	:16;
-		/* variable length payload follows */
-		
-	} __attribute__((packed));
-	
-} lifx_packet_t;
+class QUdpSocket;
 
-
-///
-/// Implementation of the LedDevice interface for sending to
-/// Lifx devices via network by using the 'external control' protocol.
-///
-class LedDeviceLifx : public ProviderUdp
+/**
+ * Implementation for the AtmoOrb
+ *
+ * To use set the device to "atmoorb".
+ *
+ * @author RickDB (github)
+ */
+class LedDeviceLifx : public LedDevice
 {
+	Q_OBJECT
 public:
+
 	///
-	/// Constructs the LedDevice for Lifx LightPanels (aka Aurora) or Canvas
+	/// Constructs specific LedDevice
 	///
-	/// following code shows all config options
-	/// @code
-	/// "device" :
-	/// {
-	///     "type"   : "lifx"
-	///     "output" : "hostname or IP", // Optional. If empty, device is tried to be discovered
-	///     "token"  : "Authentication Token",
-	/// },
-	///@endcode
-	///
-	/// @param deviceConfig json config for lifx
+	/// @param deviceConfig json device config
 	///
 	explicit LedDeviceLifx(const QJsonObject &deviceConfig);
 
 	///
-	/// Destructor of the LedDevice; closes the tcp client
+	/// Sets configuration
+	///
+	/// @param deviceConfig the json device config
+	/// @return true if success
+	bool init(const QJsonObject &deviceConfig) override;
+
+	/// constructs leddevice
+	static LedDevice* construct(const QJsonObject &deviceConfig);
+	///
+	/// Destructor of this device
 	///
 	virtual ~LedDeviceLifx() override;
-
-	/// Constructs leddevice
-	static LedDevice* construct(const QJsonObject &deviceConfig);
-
-	/// Switch the device on
-	virtual int switchOn() override;
-
-	/// Switch the device off
-	virtual int switchOff() override;
 
 protected:
 
 	///
-	/// Writes the led color values to the led-device
+	/// Initialise device's network details
 	///
-	/// @param ledValues The color-value per led
-	/// @return Zero on succes else negative
-	///
-	virtual int write(const std::vector<ColorRgb> & ledValues) override;
-
-	///
-	/// Initialise Lifx device's configuration and network address details
-	///
-	/// @param deviceConfig the json device config
 	/// @return True if success
-	///
-	bool init(const QJsonObject &deviceConfig) override;
-
-	///
-	/// Get Lifx device details and configuration
-	///
-	/// @return True, if Lifx device capabilities fit configuration
-	///
-	bool initLeds();
+	bool initNetwork();
 
 	///
 	/// Opens and initiatialises the output device
@@ -148,93 +97,81 @@ protected:
 	virtual int open() override;
 
 private:
-	// QNetworkAccessManager object for sending requests.
-	QNetworkAccessManager* _networkmanager;
-
-	QString _hostname;
-	QString _api_port;
-
-	//Lifx device details
-	QString _deviceModel;
-	QString _deviceFirmwareVersion;
-	ushort _extControlVersion;
-	
-	/// https://lan.developer.lifx.com/docs/multizone-messages
-	/// The number of panels with leds
-	uint _panelLedCount;
-	/// Array of the pannel ids.
-	std::vector<uint> _panelIds;
 
 	///
-	/// Discover Lifx device via SSDP identifiers
+	/// Sends the given led-color values to the Orbs
 	///
-	/// @return True, if Lifx device was found
+	/// @param ledValues The color-value per led
+	/// @return Zero on success else negative
 	///
-	bool discoverDevice();
+	virtual int write(const std::vector <ColorRgb> &ledValues) override;
 
 	///
-	/// Change Lifx device to External Control (UDP) mode
+	/// Set Orbcolor
 	///
-	/// @return Response from device
+	/// @param orbId the orb id
+	/// @param color which color to set
+	/// @param commandType which type of command to send (off / smoothing / etc..)
 	///
-	QJsonDocument changeToExternalControlMode();
+	void setColor(int orbId, const ColorRgb &color, int commandType);
 
 	///
-	/// Get command to switch Lifx device on or off
+	/// Send Orb command
 	///
-	/// @param isOn True, if to switch on device
-	/// @return Command to switch device on/off
+	/// @param bytes the byte array containing command to send over multicast
 	///
-	QString getOnOffRequest (bool isOn ) const;
+	void sendCommand(const QByteArray &bytes);
 
-	///
-	/// Get command as url
-	///
-	/// @param host Hostname or IP
-	/// @param port IP-Port
-	/// @param _auth_token Authorization token
-	/// @param Endpoint command for request
-	/// @return Url to execute endpoint/command
-	///
-	QString getUrl(QString host, QString port, QString endpoint) const;
+	/// QNetworkAccessManager object for sending requests.
+	QNetworkAccessManager *_networkmanager;
 
-	///
-	/// Execute GET request
-	///
-	/// @param url GET request for url
-	/// @return Response from device
-	///
-	QJsonDocument getJson(QString url);
+	/// QUdpSocket object used to send data over
+	QUdpSocket * _udpSocket;
 
-	///
-	/// Execute PUT request
-	///
-	/// @param Url for PUT request
-	/// @param json Command for request
-	/// @return Response from device
-	///
-	QJsonDocument putJson(QString url, QString json);
+	/// QHostAddress object of multicast group IP address
+	QHostAddress _groupAddress;
 
-	///
-	/// Handle replys for GET and PUT requests
-	///
-	/// @param reply Network reply
-	/// @return Response for request, if no error
-	///
-	QJsonDocument handleReply(QNetworkReply* const &reply );
+	/// String containing multicast group IP address
+	QString _multicastGroup;
 
-	///
-	/// convert vector to hex string
-	///
-	/// @param uint8_t vector
-	/// @return vector as string of hex values
-	std::string uint8_vector_to_hex_string( const std::vector<uint8_t>& buffer ) const;
-	
+	/// Multicast port to send data to
+	quint16 _multiCastGroupPort;
+
+	// Multicast status
+	bool joinedMulticastgroup;
+
+	/// use Orbs own (external) smoothing algorithm
+	bool _useOrbSmoothing;
+
+	/// Transition time between colors (not implemented)
+	int _transitiontime;
+
+	// Maximum allowed color difference, will skip Orb (external) smoothing once reached
+	int _skipSmoothingDiff;
+
+	/// Number of leds in Orb, used to determine buffer size
+	int _numLeds;
+
+	/// Array of the orb ids.
+	QVector<int> _orbIds;
+
+	// Last send color map
+	QMap<int, int> lastColorRedMap;
+	QMap<int, int> lastColorGreenMap;
+	QMap<int, int> lastColorBlueMap;
+
+
+
 	/// Array of the light ids.
 	std::vector<unsigned int> _lightIds;
 	/// Array to save the lamps.
 	std::vector<LedDeviceLifx> _lights;
 
 	unsigned int _lightsCount;
-	
+
+
 };
+
+	
+
+
